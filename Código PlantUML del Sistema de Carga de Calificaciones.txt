@@ -1,0 +1,215 @@
+@startuml
+
+skinparam backgroundColor #ffffff
+skinparam shadowing false
+skinparam linetype ortho
+skinparam ArrowColor #3A6EA5
+
+skinparam class {
+  BackgroundColor<<Entidad>> #f8faff
+  BorderColor #2450a0
+  FontColor #1a1a1a
+  AttributeFontColor #303030
+  AttributeFontSize 11
+  RoundCorner 10
+}
+
+header
+Proyecto: Sistema de Carga de Calificaciones.
+Autor: Alan Aquino, estudiante de Ingeniería en Informática.
+Base de datos: PostgreSQL.
+Creación: 2025.
+end header 
+
+title
+<b>Sistema de Carga de Calificaciones</b>
+<i>Diagrama Entidad-Relación (DER)</i>
+end title
+
+' ==========================================================
+' ENTIDADES
+' ==========================================================
+
+entity "rol" as rol <<Entidad>> {
+  id_rol : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  nombre_rol : VARCHAR(50) NOT NULL
+}
+
+entity "usuario" as usuario <<Entidad>> {
+  id_usuario : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_rol : INT <<FK>> NOT NULL
+  nombre : VARCHAR(50) NOT NULL
+  apellido : VARCHAR(50) NOT NULL
+  correo : VARCHAR(100) NOT NULL
+  contrasena : VARCHAR(255) NOT NULL
+  activo : BOOLEAN DEFAULT TRUE
+}
+
+entity "institucion" as institucion <<Entidad>> {
+  id_institucion : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  nombre : VARCHAR(100) NOT NULL
+  direccion : VARCHAR(150)
+  telefono : VARCHAR(20)
+  id_usuario_creador : INT <<FK>> NOT NULL
+}
+
+entity "nivel" as nivel <<Entidad>> {
+  id_nivel : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  nombre : VARCHAR(50) NOT NULL
+}
+
+entity "grado" as grado <<Entidad>> {
+  id_grado : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_nivel : INT <<FK>> NOT NULL
+  nombre : VARCHAR(50) NOT NULL
+}
+
+entity "seccion" as seccion <<Entidad>> {
+  id_seccion : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_grado : INT <<FK>> NOT NULL
+  nombre : VARCHAR(50) NOT NULL
+}
+
+entity "periodo_academico" as periodo_academico <<Entidad>> {
+  id_periodo : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  anio : INTEGER NOT NULL
+  descripcion : VARCHAR(100)
+  activo : BOOLEAN DEFAULT TRUE
+}
+
+entity "estudiante" as estudiante <<Entidad>> {
+  id_estudiante : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  nombres : VARCHAR(100) NOT NULL
+  apellidos : VARCHAR(100) NOT NULL
+  dni : VARCHAR(15) UNIQUE
+  fecha_nacimiento : DATE
+  direccion : VARCHAR(150)
+  telefono : VARCHAR(20)
+}
+
+entity "matricula" as matricula <<Entidad>> {
+  id_matricula : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_estudiante : INT <<FK>> NOT NULL
+  id_periodo : INT <<FK>> NOT NULL
+  id_seccion : INT <<FK>> NOT NULL
+  fecha_matricula : DATE DEFAULT CURRENT_DATE
+}
+
+entity "asignatura" as asignatura <<Entidad>> {
+  id_asignatura : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  nombre : VARCHAR(100) NOT NULL
+}
+
+entity "asignatura_grado" as asignatura_grado <<Entidad>> {
+  id_asignatura_grado : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_asignatura : INT <<FK>> NOT NULL
+  id_grado : INT <<FK>> NOT NULL
+  carga_horaria : INTEGER
+}
+
+entity "tipo_evaluacion" as tipo_evaluacion <<Entidad>> {
+  id_tipo_evaluacion : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  nombre : VARCHAR(100) NOT NULL
+}
+
+entity "evaluacion" as evaluacion <<Entidad>> {
+  id_evaluacion : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_tipo_evaluacion : INT <<FK>> NOT NULL
+  id_asignatura : INT <<FK>> NOT NULL
+  nombre : VARCHAR(100) NOT NULL
+  ponderacion : NUMERIC(5,2) CHECK (ponderacion >= 0 AND ponderacion <= 100)
+}
+
+entity "calificacion" as calificacion <<Entidad>> {
+  id_calificacion : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_estudiante : INT <<FK>> NOT NULL
+  id_evaluacion : INT <<FK>> NOT NULL
+  nota_escala : NUMERIC(3,2) CHECK (nota_escala >= 1 AND nota_escala <= 5)
+  fecha_modificacion : TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+}
+
+entity "recuperacion" as recuperacion <<Entidad>> {
+  id_recuperacion : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_calificacion : INT <<FK>> NOT NULL
+  nota : NUMERIC(3,2) CHECK (nota >= 1 AND nota <= 5)
+}
+
+entity "escala_conversion" as escala_conversion <<Entidad>> {
+  id_conversion : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  nota_minima : NUMERIC(3,2)
+  nota_maxima : NUMERIC(3,2)
+  descripcion : VARCHAR(50)
+}
+
+entity "configuracion" as configuracion <<Entidad>> {
+  id_configuracion : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  nombre_institucion : VARCHAR(100)
+  anio_lectivo : INTEGER
+  id_conversion : INT <<FK>>
+  activo : BOOLEAN DEFAULT TRUE
+}
+
+entity "boleta" as boleta <<Entidad>> {
+  id_boleta : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_estudiante : INT <<FK>> NOT NULL
+  id_periodo : INT <<FK>> NOT NULL
+  promedio_final : NUMERIC(4,2)
+}
+
+entity "observacion" as observacion <<Entidad>> {
+  id_observacion : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  id_estudiante : INT <<FK>> NOT NULL
+  texto : TEXT
+}
+
+entity "auditoria" as auditoria <<Entidad>> {
+  id_auditoria : INTEGER GENERATED ALWAYS AS IDENTITY <<PK>>
+  usuario_id : INT <<FK>>
+  tabla_afectada : VARCHAR(100)
+  accion : VARCHAR(50)
+  registro_id : INT
+  fecha : TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  descripcion : TEXT
+}
+
+' ==========================================================
+' RELACIONES / CARDINALIDADES
+' ==========================================================
+
+usuario }o--|| rol
+institucion }o--|| usuario
+grado }o--|| nivel
+seccion }o--|| grado
+matricula }o--|| estudiante
+matricula }o--|| periodo_academico
+matricula }o--|| seccion
+asignatura_grado }o--|| asignatura
+asignatura_grado }o--|| grado
+evaluacion }o--|| tipo_evaluacion
+evaluacion }o--|| asignatura
+calificacion }o--|| estudiante
+calificacion }o--|| evaluacion
+recuperacion }o--|| calificacion
+boleta }o--|| estudiante
+boleta }o--|| periodo_academico
+observacion }o--|| estudiante
+configuracion }o--|| escala_conversion
+auditoria }o--|| usuario
+
+' ==========================================================
+' NOTAS Y PIE
+' ==========================================================
+
+note bottom of rol
+<b>Nota:</b>
+Seis entidades forman el <b>módulo administrativo y de configuración</b> del sistema: <b>rol</b>, <b>usuario</b>, <b>institucion</b>, <b>auditoria</b>, <b>configuracion</b> y <b>escala_conversion</b>.
+- Se encargan de la gestión institucional, usuarios, auditoría y parámetros globales.
+- No intervienen directamente en el flujo académico.
+- Mantienen independencia lógica respecto al ciclo lectivo y las entidades académicas.
+end note
+
+footer
+© 2025 Alan Aquino. DER generado con PlantUML.
+end footer
+
+@enduml
