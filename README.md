@@ -27,7 +27,7 @@ El modelo está documentado mediante un Diagrama Entidad-Relación (DER) generad
 
 1. Clona este repositorio:
    ```bash
-   git clone https://github.com/alanaquino72/sistema-carga-calificaciones-postgresql.git
+   git clone https://github.com/alanaquino19/sistema-carga-calificaciones-postgresql.git
    ```
 2. Abre **pgAdmin**.
 3. Carga el archivo `sistema_carga_calificaciones.sql`.
